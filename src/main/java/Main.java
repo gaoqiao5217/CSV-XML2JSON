@@ -3,16 +3,13 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.bean.ColumnPositionMappingStrategy;
 import com.opencsv.bean.CsvToBeanBuilder;
+import org.json.simple.JSONArray;
+import org.json.simple.parser.JSONParser;
 import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,6 +28,15 @@ public class Main {
         List<Employee> employees_xml = parseXML(XML_FILE_PATH);
         String json1 = listToJson(employees_xml);
         writeString(json1, JSON2_FILE_PATH);
+
+        try {
+            String json2 = readString(JSON2_FILE_PATH);
+            List<Employee> list = jsonToList(json2);
+            list.forEach(System.out::println);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     public static List<Employee> parseXML(String fileName) {
@@ -96,5 +102,36 @@ public class Main {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static String readString(String fileName) throws IOException {
+        StringBuilder content = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                content.append(line);
+            }
+        }
+        return content.toString();
+    }
+
+    public static List<Employee> jsonToList(String json) {
+        List<Employee> employees = new ArrayList<>();
+
+        try {
+            JSONParser parser = new JSONParser();
+            GsonBuilder builder = new GsonBuilder();
+            Gson gson = builder.create();
+
+            JSONArray jsonArray = (JSONArray) parser.parse(json);
+            for (Object obj : jsonArray) {
+                Employee employee = gson.fromJson(obj.toString(), Employee.class);
+                employees.add(employee);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return employees;
     }
 }
